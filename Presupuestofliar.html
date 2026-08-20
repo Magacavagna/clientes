@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Presupuesto Familiar</title>
+<style>
+  :root{
+    --verde:#0B4A3C;
+    --verde-suave:#164F41;
+    --crema:#FAF6EE;
+    --crema2:#F1EADB;
+    --terracota:#C1694A;
+    --azul:#33526B;
+    --oro:#C79A3E;
+    --oro-fondo:#F7ECD2;
+    --texto:#232823;
+    --gris:#7C8A80;
+    --borde:#E4DCC8;
+    --rojo:#B0473D;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--crema); color:var(--texto);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding-bottom:76px;
+  }
+  h1,h2,h3{ font-family:Georgia,'Iowan Old Style','Palatino Linotype',serif; margin:0; font-weight:600;}
+  .top{
+    background:var(--verde); color:#fff; padding:22px 18px 16px;
+    position:sticky; top:0; z-index:10;
+  }
+  .top h1{font-size:1.28rem; letter-spacing:.2px;}
+  .top .sub{font-size:.78rem; opacity:.8; margin-top:2px;}
+  .container{padding:14px 14px 8px;}
+  .card{
+    background:#fff; border:1px solid var(--borde); border-radius:14px;
+    padding:16px; margin-bottom:12px;
+  }
+  .card h2{font-size:1.02rem; color:var(--verde); margin-bottom:10px;}
+  .card h3{font-size:.86rem; color:var(--verde-suave); margin:14px 0 6px;}
+  .row{display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:.88rem; gap:10px;}
+  .row .label{color:var(--texto); flex:1;}
+  .row .val{font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .row.total{border-top:1px solid var(--borde); margin-top:6px; padding-top:9px; font-weight:700;}
+  .row.total .val{color:var(--verde);}
+  .row.chico{font-size:.78rem; color:var(--gris);}
+  .tag{
+    display:inline-block; font-size:.68rem; font-weight:700; padding:2px 8px;
+    border-radius:20px; margin-left:6px; letter-spacing:.2px;
+  }
+  .tag.rocio{background:#F3E3DB; color:var(--terracota);}
+  .tag.nacho{background:#DFE7EC; color:var(--azul);}
+  .tag.ambos{background:#EEE9DA; color:var(--gris);}
+  .split{display:flex; gap:10px;}
+  .split > div{flex:1; background:var(--crema2); border-radius:10px; padding:10px 12px;}
+  .split .k{font-size:.7rem; color:var(--gris); text-transform:uppercase; letter-spacing:.3px;}
+  .split .v{font-size:1.05rem; font-weight:700; color:var(--verde); margin-top:2px;}
+  .objetivo-box{background:var(--oro-fondo); border-radius:10px; padding:10px 12px; margin:8px 0;}
+  .select-mes{
+    width:100%; padding:12px 14px; border-radius:12px; border:none;
+    background:rgba(255,255,255,.15); color:#fff; font-size:1rem; font-weight:600;
+    margin-top:10px; -webkit-appearance:none; appearance:none;
+  }
+  .select-mes option{color:#111;}
+  input, select{
+    width:100%; padding:10px 12px; border-radius:9px; border:1px solid var(--borde);
+    font-size:.92rem; background:#fff; color:var(--texto); font-family:inherit;
+  }
+  label{font-size:.74rem; color:var(--gris); display:block; margin:8px 0 3px;}
+  .btn{
+    width:100%; padding:12px; border:none; border-radius:10px; background:var(--verde);
+    color:#fff; font-weight:700; font-size:.92rem; margin-top:14px; cursor:pointer;
+  }
+  .btn:active{background:var(--verde-suave);}
+  .btn-del{
+    border:none; background:none; color:var(--rojo); font-size:.72rem; font-weight:700;
+    padding:4px 8px; cursor:pointer;
+  }
+  .movi{
+    display:flex; justify-content:space-between; align-items:center; padding:8px 0;
+    border-bottom:1px dashed var(--borde); font-size:.85rem;
+  }
+  .movi:last-child{border-bottom:none;}
+  .movi .meta{color:var(--gris); font-size:.72rem;}
+  .empty{color:var(--gris); font-size:.85rem; text-align:center; padding:18px 0;}
+  .navbar{
+    position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--borde);
+    display:flex; z-index:20;
+  }
+  .navbar button{
+    flex:1; background:none; border:none; padding:10px 2px 12px; font-size:.66rem;
+    color:var(--gris); font-weight:600; cursor:pointer; font-family:inherit;
+  }
+  .navbar button .ico{display:block; font-size:1.15rem; margin-bottom:2px;}
+  .navbar button.active{color:var(--verde);}
+  .hidden{display:none;}
+  .month-card{background:#fff; border:1px solid var(--borde); border-radius:14px; padding:14px 16px; margin-bottom:10px;}
+  .month-card h3{color:var(--verde); font-family:Georgia,serif; font-size:1rem; margin-bottom:8px;}
+  .banner{
+    background:var(--oro-fondo); border-radius:10px; padding:10px 12px; font-size:.78rem;
+    color:#6B5424; margin-bottom:12px; line-height:1.4;
+  }
+  .balance-ok{color:var(--verde);}
+  .balance-bad{color:var(--rojo);}
+  .person-toggle{display:flex; gap:8px; margin-bottom:12px;}
+  .person-toggle button{
+    flex:1; padding:9px; border-radius:10px; border:1px solid var(--borde); background:#fff;
+    font-weight:700; font-size:.85rem; color:var(--gris); cursor:pointer;
+  }
+  .person-toggle button.active{background:var(--verde); color:#fff; border-color:var(--verde);}
+</style>
+</head>
+<body>
+
+<div class="top" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1>Presupuesto Familiar</h1>
+    <div class="sub">De Martini · Eraso</div>
+  </div>
+  <button id="refreshBtn" style="background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:20px; padding:8px 12px; font-size:.78rem; font-weight:700;">🔄 Actualizar</button>
+</div>
+
+<div class="container" id="app"></div>
+
+<div class="navbar">
+  <button data-tab="dashboard" class="active"><span class="ico">🏠</span>Casa</button>
+  <button data-tab="registro"><span class="ico">➕</span>Cargar</button>
+  <button data-tab="comparativo"><span class="ico">📈</span>Meses</button>
+  <button data-tab="personal"><span class="ico">👤</span>Personal</button>
+</div>
+
+<script>
+const MESES = ["Ago-26","Sep-26","Oct-26","Nov-26","Dic-26","Ene-27","Feb-27","Mar-27","Abr-27","May-27","Jun-27","Jul-27"];
+const AMBITOS = ["Ingreso","Hogar Fijo","Hogar Variable","Hogar Otro","Objetivo",
+  "Presupuesto Súper","Súper","Presupuesto Salidas","Salidas","Presupuesto Nafta","Nafta",
+  "USD Ingreso","USD Egreso"];
+const PERSONAS = ["Rocío","Nacho","Ambos"];
+const CAT_PERSONAL = ["Ropa / accesorios","Estética","Salidas propias","Hobbies","Tarjeta propia","Ahorro / inversión personal","Otros"];
+
+let registro = [];
+let personal = { "Rocío": [], "Nacho": [] };
+let mesActual = "Ago-26";
+let tab = "dashboard";
+let personSel = "Rocío";
+let saving = false;
+
+const fmt = (n) => "$ " + Math.round(n||0).toLocaleString("es-AR");
+const fmtUsd = (n) => "US$ " + Math.round(n||0).toLocaleString("es-AR");
+const uid = () => Math.random().toString(36).slice(2,10);
+
+// ---------- Datos semilla (Agosto 2026, igual que el registro real) ----------
+function seedRegistro(){
+  const f = (mes,fecha,ambito,item,monto,persona="") => ({id:uid(),mes,fecha,ambito,item,monto,persona});
+  const rows = [];
+  rows.push(f("Ago-26","","Ingreso","Ingreso",7500000,"Rocío"));
+  rows.push(f("Ago-26","","Ingreso","Ingreso",10000000,"Nacho"));
+  const fijos = [["Colegio",1358864],["Luz",38348],["Gas",10492],["ABL",175246],["Expensas",1489789],
+    ["AySA",129378],["Empleada doméstica",920000],["Aportes empleada",43082],["Transporte",360000],
+    ["Patente",124789],["Cochera",0],["OSDE (obra social)",870555]];
+  fijos.forEach(([item,monto]) => rows.push(f("Ago-26","","Hogar Fijo",item,monto)));
+  const variables = [["AMEX Galicia",184747],["Patagonia",0],["Visa Galicia",1323202],["Visa BBVA",1790381],
+    ["Master BBVA",49000],["Santander",280000],["Gastos Alejandra",400000],["Pablo Terama",80000],
+    ["Fútbol",80000],["Profesor música",200000],["Paseadora de perros",150000],["Cuota La Angostura",365750],
+    ["Auto Miami",310000],["Regalos amigos Joaquín",200000]];
+  variables.forEach(([item,monto]) => rows.push(f("Ago-26","","Hogar Variable",item,monto)));
+  rows.push(f("Ago-26","","Hogar Otro","Cuota auto",1688000));
+  rows.push(f("Ago-26","","Objetivo","Fondo de Emergencia",1000000));
+  rows.push(f("Ago-26","","Objetivo","Vacaciones",0));
+  rows.push(f("Ago-26","","Presupuesto Súper","Presupuesto",850000,"Rocío"));
+  rows.push(f("Ago-26","","Presupuesto Súper","Presupuesto",350000,"Nacho"));
+  [["01/08","Lavado auto",60000,"Rocío"],["03/08","Remedio Joaquín",75000,"Rocío"],["05/08","Shampoo Vero",23000,"Rocío"],
+   ["08/08","Supermercado",53600,"Rocío"],["15/08","Supermercado",258500,"Rocío"],["18/08","Verdulería Belén",19200,"Rocío"]]
+   .forEach(([fecha,item,monto,p]) => rows.push(f("Ago-26",fecha,"Súper",item,monto,p)));
+  rows.push(f("Ago-26","","Presupuesto Salidas","Presupuesto",100000,"Rocío"));
+  rows.push(f("Ago-26","","Presupuesto Salidas","Presupuesto",300000,"Nacho"));
+  [["02/08","Joaqui cine con amigos",60000,"Nacho"],["06/08","Café con Nacho",19000,"Rocío"],
+   ["12/08","Almuerzo",150000,"Nacho"],["20/08","Malba",24000,"Nacho"],["22/08","Delivery",46000,"Nacho"]]
+   .forEach(([fecha,item,monto,p]) => rows.push(f("Ago-26",fecha,"Salidas",item,monto,p)));
+  rows.push(f("Ago-26","","Presupuesto Nafta","Presupuesto",0,"Rocío"));
+  rows.push(f("Ago-26","","Presupuesto Nafta","Presupuesto",220000,"Nacho"));
+  rows.push(f("Ago-26","10/08","Nafta","Axion",67000,"Nacho"));
+  rows.push(f("Ago-26","","USD Ingreso","Ingreso USD",3200,"Rocío"));
+  rows.push(f("Ago-26","","USD Ingreso","Ingreso USD",3200,"Nacho"));
+  rows.push(f("Ago-26","","USD Egreso","Alquiler",1800,"Nacho"));
+  rows.push(f("Ago-26","","USD Egreso","Suscripciones",1300,"Nacho"));
+  return rows;
+}
+
+// ---------- Storage (Firebase Realtime Database, vía REST API) ----------
+const FIREBASE_URL = "https://presupuesto-fliar-default-rtdb.firebaseio.com";
+const PKEY = { "Rocío": "personal_Rocio", "Nacho": "personal_Nacho" };
+
+async function loadData(){
+  const app = document.getElementById("app");
+  if(app) app.innerHTML = `<div class="empty">Actualizando datos…</div>`;
+  try{
+    const res = await fetch(FIREBASE_URL + "/registro.json");
+    const data = await res.json();
+    if(data){ registro = data; }
+    else{ registro = seedRegistro(); await saveRegistro(); }
+  }catch(e){
+    console.error(e);
+    registro = registro.length ? registro : seedRegistro();
+  }
+  for(const p of ["Rocío","Nacho"]){
+    try{
+      const res = await fetch(FIREBASE_URL + "/" + PKEY[p] + ".json");
+      const data = await res.json();
+      personal[p] = data || [];
+    }catch(e){ personal[p] = personal[p] || []; }
+  }
+  render();
+}
+async function saveRegistro(){
+  try{
+    await fetch(FIREBASE_URL + "/registro.json", {
+      method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify(registro)
+    });
+  }catch(e){ console.error(e); alert("No se pudo guardar. Revisá tu conexión a internet e intentá de nuevo."); }
+}
+async function savePersonal(p){
+  try{
+    await fetch(FIREBASE_URL + "/" + PKEY[p] + ".json", {
+      method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify(personal[p])
+    });
+  }catch(e){ console.error(e); alert("No se pudo guardar. Revisá tu conexión a internet e intentá de nuevo."); }
+}
+
+// ---------- Cálculo del mes ----------
+function computeMonth(mes){
+  const rows = registro.filter(t => t.mes === mes);
+  const sum = (arr) => arr.reduce((a,t) => a + (Number(t.monto)||0), 0);
+  const by = (ambito, persona=null, item=null) => rows.filter(t =>
+    t.ambito===ambito && (persona===null || t.persona===persona) && (item===null || t.item===item));
+
+  const ingRocio = sum(by("Ingreso","Rocío"));
+  const ingNacho = sum(by("Ingreso","Nacho"));
+  const ingTotal = ingRocio + ingNacho;
+  const pctRocio = ingTotal ? ingRocio/ingTotal : 0;
+  const pctNacho = ingTotal ? 1-pctRocio : 0;
+
+  const fijosRows = by("Hogar Fijo"); const fijosTot = sum(fijosRows);
+  const variablesRows = by("Hogar Variable"); const variablesTot = sum(variablesRows);
+  const otrosRows = by("Hogar Otro"); const otrosTot = sum(otrosRows);
+  const presupSuper = sum(by("Presupuesto Súper"));
+  const presupSalidas = sum(by("Presupuesto Salidas"));
+  const presupNafta = sum(by("Presupuesto Nafta"));
+  const totalHogar = fijosTot + variablesTot + otrosTot + presupSuper + presupSalidas + presupNafta;
+  const aporteRocioHogar = totalHogar * pctRocio;
+  const aporteNachoHogar = totalHogar * pctNacho;
+
+  const objRows = by("Objetivo"); const objTot = sum(objRows);
+  const aporteRocioObj = objTot*0.5, aporteNachoObj = objTot*0.5;
+
+  const totalGeneral = totalHogar + objTot;
+  const aporteRocioTotal = aporteRocioHogar + aporteRocioObj;
+  const aporteNachoTotal = aporteNachoHogar + aporteNachoObj;
+
+  const sobranteRocio = ingRocio - aporteRocioTotal;
+  const sobranteNacho = ingNacho - aporteNachoTotal;
+  const fondoComun = sobranteRocio + sobranteNacho;
+  const personalRocio = fondoComun*0.5, personalNacho = fondoComun*0.5;
+
+  const usdIngRocio = sum(by("USD Ingreso","Rocío"));
+  const usdIngNacho = sum(by("USD Ingreso","Nacho"));
+  const usdEgresoRows = by("USD Egreso");
+  const usdEgresoRocio = sum(usdEgresoRows.filter(t=>t.persona==="Rocío"));
+  const usdEgresoNacho = sum(usdEgresoRows.filter(t=>t.persona==="Nacho"));
+
+  function bloqueVariable(ambitoPresup, ambitoGasto){
+    const pR = sum(by(ambitoPresup,"Rocío"));
+    const pN = sum(by(ambitoPresup,"Nacho"));
+    const gRows = by(ambitoGasto);
+    const gR = sum(gRows.filter(t=>t.persona==="Rocío"));
+    const gN = sum(gRows.filter(t=>t.persona==="Nacho"));
+    return {presupR:pR, presupN:pN, presupTotal:pR+pN, gastadoR:gR, gastadoN:gN,
+            gastadoTotal:gR+gN, diffR:pR-gR, diffN:pN-gN, items:gRows};
+  }
+  const superB = bloqueVariable("Presupuesto Súper","Súper");
+  const salidasB = bloqueVariable("Presupuesto Salidas","Salidas");
+  const naftaB = bloqueVariable("Presupuesto Nafta","Nafta");
+
+  const totalAportado = totalGeneral + fondoComun;
+  const diff = ingTotal - totalAportado;
+
+  return {mes, ingRocio, ingNacho, ingTotal, pctRocio, pctNacho,
+    fijosRows, fijosTot, variablesRows, variablesTot, otrosRows, otrosTot,
+    presupSuper, presupSalidas, presupNafta, totalHogar, aporteRocioHogar, aporteNachoHogar,
+    objRows, objTot, aporteRocioObj, aporteNachoObj, totalGeneral,
+    aporteRocioTotal, aporteNachoTotal, sobranteRocio, sobranteNacho, fondoComun,
+    personalRocio, personalNacho, usdIngRocio, usdIngNacho, usdEgresoRows, usdEgresoRocio, usdEgresoNacho,
+    superB, salidasB, naftaB, diff};
+}
+
+function computePersonalMonth(persona, mes, fondoComun){
+  const rows = personal[persona].filter(e => e.mes===mes);
+  const otrosIng = rows.filter(e=>e.tipo==="ingreso").reduce((a,e)=>a+(Number(e.monto)||0),0);
+  const gastos = rows.filter(e=>e.tipo==="gasto");
+  const totalGastos = gastos.reduce((a,e)=>a+(Number(e.monto)||0),0);
+  const totalIng = fondoComun + otrosIng;
+  return {otrosIng, gastos, totalGastos, totalIng, balance: totalIng-totalGastos};
+}
+
+// ---------- Render ----------
+function el(html){ const d=document.createElement("div"); d.innerHTML=html; return d.firstElementChild; }
+function itemsList(rows, showPersona=false){
+  if(!rows.length) return `<div class="row chico">Sin movimientos cargados.</div>`;
+  return rows.map(t => `<div class="row"><span class="label">${t.item}${showPersona&&t.persona?` <span class="tag ${t.persona==='Rocío'?'rocio':t.persona==='Nacho'?'nacho':'ambos'}">${t.persona}</span>`:''}</span><span class="val">${fmt(t.monto)}</span></div>`).join("");
+}
+
+function renderDashboard(){
+  const d = computeMonth(mesActual);
+  const diffOk = Math.abs(d.diff) < 1;
+  return `
+    <div class="card" style="background:var(--verde); border:none;">
+      <label style="color:#DCEAE4;">Mes</label>
+      <select class="select-mes" id="mesSel">
+        ${MESES.map(m=>`<option value="${m}" ${m===mesActual?'selected':''}>${m}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="card">
+      <h2>Ingresos del mes</h2>
+      <div class="split">
+        <div><div class="k">Rocío</div><div class="v">${fmt(d.ingRocio)}</div></div>
+        <div><div class="k">Nacho</div><div class="v">${fmt(d.ingNacho)}</div></div>
+      </div>
+      <div class="row total"><span class="label">Total familia</span><span class="val">${fmt(d.ingTotal)}</span></div>
+      <div class="row chico"><span class="label">% Rocío / Nacho</span><span class="val">${(d.pctRocio*100).toFixed(1)}% / ${(d.pctNacho*100).toFixed(1)}%</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Gastos del hogar <span class="tag ambos">Paso 1 · proporcional</span></h2>
+      <h3>Fijos</h3>${itemsList(d.fijosRows)}
+      <div class="row total"><span class="label">Total fijos</span><span class="val">${fmt(d.fijosTot)}</span></div>
+      <h3>Tarjetas / variables</h3>${itemsList(d.variablesRows)}
+      <div class="row total"><span class="label">Total tarjetas</span><span class="val">${fmt(d.variablesTot)}</span></div>
+      <h3>Otros</h3>${itemsList(d.otrosRows)}
+      <h3>Súper / Salidas / Nafta (presupuesto asignado)</h3>
+      <div class="row"><span class="label">Súper</span><span class="val">${fmt(d.presupSuper)}</span></div>
+      <div class="row"><span class="label">Salidas</span><span class="val">${fmt(d.presupSalidas)}</span></div>
+      <div class="row"><span class="label">Nafta</span><span class="val">${fmt(d.presupNafta)}</span></div>
+      <div class="row total"><span class="label">TOTAL GASTOS DEL HOGAR</span><span class="val">${fmt(d.totalHogar)}</span></div>
+      <div class="split" style="margin-top:8px;">
+        <div><div class="k">Aporta Rocío</div><div class="v">${fmt(d.aporteRocioHogar)}</div></div>
+        <div><div class="k">Aporta Nacho</div><div class="v">${fmt(d.aporteNachoHogar)}</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Súper / Salidas / Nafta <span class="tag ambos">detalle</span></h2>
+      ${["Súper","Salidas","Nafta"].map((label,i)=>{
+        const b = [d.superB, d.salidasB, d.naftaB][i];
+        return `<h3>${label}</h3>
+        <div class="row chico"><span class="label">Presupuesto (R / N)</span><span class="val">${fmt(b.presupR)} / ${fmt(b.presupN)}</span></div>
+        <div class="row chico"><span class="label">Gastado (R / N)</span><span class="val">${fmt(b.gastadoR)} / ${fmt(b.gastadoN)}</span></div>
+        <div class="row chico"><span class="label">Diferencia (R / N)</span><span class="val ${(b.diffR<0||b.diffN<0)?'balance-bad':''}">${fmt(b.diffR)} / ${fmt(b.diffN)}</span></div>`;
+      }).join("")}
+    </div>
+
+    <div class="card">
+      <h2>Objetivos familiares <span class="tag ambos">Paso 2 · 50/50</span></h2>
+      ${itemsList(d.objRows)}
+      <div class="row total"><span class="label">Total objetivos</span><span class="val">${fmt(d.objTot)}</span></div>
+      <div class="split" style="margin-top:8px;">
+        <div><div class="k">Rocío 50%</div><div class="v">${fmt(d.aporteRocioObj)}</div></div>
+        <div><div class="k">Nacho 50%</div><div class="v">${fmt(d.aporteNachoObj)}</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Fondo común personal <span class="tag ambos">Paso 3 · 50/50</span></h2>
+      <div class="objetivo-box">
+        <div class="row"><span class="label">Sobrante Rocío</span><span class="val">${fmt(d.sobranteRocio)}</span></div>
+        <div class="row"><span class="label">Sobrante Nacho</span><span class="val">${fmt(d.sobranteNacho)}</span></div>
+        <div class="row total"><span class="label">Fondo común total</span><span class="val">${fmt(d.fondoComun)}</span></div>
+        <div class="split" style="margin-top:8px;">
+          <div><div class="k">Personal Rocío</div><div class="v">${fmt(d.personalRocio)}</div></div>
+          <div><div class="k">Personal Nacho</div><div class="v">${fmt(d.personalNacho)}</div></div>
+        </div>
+      </div>
+      <div class="row chico">→ Esto se ve reflejado solo en la pestaña Personal de cada uno.</div>
+    </div>
+
+    <div class="card">
+      <h2>Ingresos y egresos en USD</h2>
+      <div class="row"><span class="label">Ingreso USD Rocío</span><span class="val">${fmtUsd(d.usdIngRocio)}</span></div>
+      <div class="row"><span class="label">Ingreso USD Nacho</span><span class="val">${fmtUsd(d.usdIngNacho)}</span></div>
+      <div class="row total"><span class="label">Total ingreso USD</span><span class="val">${fmtUsd(d.usdIngRocio+d.usdIngNacho)}</span></div>
+      <h3>Egresos USD</h3>${itemsList(d.usdEgresoRows, true)}
+      <div class="row total"><span class="label">Balance USD</span><span class="val">${fmtUsd(d.usdIngRocio+d.usdIngNacho-d.usdEgresoRocio-d.usdEgresoNacho)}</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Resumen y verificación</h2>
+      <div class="row"><span class="label">Total ingresos familia</span><span class="val">${fmt(d.ingTotal)}</span></div>
+      <div class="row"><span class="label">Total aportado (hogar+objetivos+fondo)</span><span class="val">${fmt(d.totalGeneral+d.fondoComun)}</span></div>
+      <div class="row total"><span class="label">Diferencia</span><span class="val ${diffOk?'balance-ok':'balance-bad'}">${fmt(d.diff)} ${diffOk?'✓':'⚠'}</span></div>
+    </div>
+  `;
+}
+
+function renderRegistro(){
+  const movs = registro.filter(t=>t.mes===mesActual).slice().reverse();
+  return `
+    <div class="card">
+      <h2>Cargar movimiento</h2>
+      <form id="formRegistro">
+        <label>Mes</label>
+        <select name="mes">${MESES.map(m=>`<option ${m===mesActual?'selected':''}>${m}</option>`).join("")}</select>
+        <label>Fecha (opcional)</label>
+        <input name="fecha" placeholder="ej. 05/08">
+        <label>Ámbito</label>
+        <select name="ambito">${AMBITOS.map(a=>`<option>${a}</option>`).join("")}</select>
+        <label>Ítem / concepto</label>
+        <input name="item" placeholder="ej. Supermercado" required>
+        <label>Monto</label>
+        <input name="monto" type="number" step="1" placeholder="0" required>
+        <label>Persona</label>
+        <select name="persona"><option value="">—</option>${PERSONAS.map(p=>`<option>${p}</option>`).join("")}</select>
+        <button class="btn" type="submit">Guardar movimiento</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Movimientos de ${mesActual}</h2>
+      ${movs.length ? movs.map(t=>`
+        <div class="movi">
+          <div>
+            <div>${t.item} ${t.persona?`<span class="tag ${t.persona==='Rocío'?'rocio':t.persona==='Nacho'?'nacho':'ambos'}">${t.persona}</span>`:''}</div>
+            <div class="meta">${t.ambito}${t.fecha?' · '+t.fecha:''}</div>
+          </div>
+          <div style="text-align:right;">
+            <div>${fmt(t.monto)}</div>
+            <button class="btn-del" data-id="${t.id}">Borrar</button>
+          </div>
+        </div>`).join("") : `<div class="empty">Todavía no cargaste nada este mes.</div>`}
+    </div>
+  `;
+}
+
+function renderComparativo(){
+  return MESES.map(mes => {
+    const d = computeMonth(mes);
+    if(d.ingTotal===0 && d.totalHogar===0) return `
+      <div class="month-card"><h3>${mes}</h3><div class="empty">Sin datos cargados.</div></div>`;
+    return `
+      <div class="month-card">
+        <h3>${mes}</h3>
+        <div class="row"><span class="label">Ingreso total</span><span class="val">${fmt(d.ingTotal)}</span></div>
+        <div class="row"><span class="label">Gastos del hogar</span><span class="val">${fmt(d.totalHogar)}</span></div>
+        <div class="row"><span class="label">Aporte Rocío / Nacho</span><span class="val">${fmt(d.aporteRocioTotal)} / ${fmt(d.aporteNachoTotal)}</span></div>
+        <div class="row"><span class="label">Objetivos</span><span class="val">${fmt(d.objTot)}</span></div>
+        <div class="row total"><span class="label">Fondo común (c/u)</span><span class="val">${fmt(d.personalRocio)}</span></div>
+      </div>`;
+  }).join("");
+}
+
+function renderPersonal(){
+  const d = computeMonth(mesActual);
+  const fondoComun = personSel==="Rocío" ? d.personalRocio : d.personalNacho;
+  const p = computePersonalMonth(personSel, mesActual, fondoComun);
+  return `
+    <div class="person-toggle">
+      <button data-p="Rocío" class="${personSel==='Rocío'?'active':''}">Rocío</button>
+      <button data-p="Nacho" class="${personSel==='Nacho'?'active':''}">Nacho</button>
+    </div>
+    <div class="card">
+      <select class="select-mes" style="background:#F1EADB; color:var(--texto);" id="mesSelPersonal">
+        ${MESES.map(m=>`<option value="${m}" ${m===mesActual?'selected':''}>${m}</option>`).join("")}
+      </select>
+    </div>
+    <div class="card">
+      <h2>Ingresos de ${personSel}</h2>
+      <div class="row"><span class="label">Fondo común (automático)</span><span class="val">${fmt(fondoComun)}</span></div>
+      <div class="row"><span class="label">Otros ingresos</span><span class="val">${fmt(p.otrosIng)}</span></div>
+      <div class="row total"><span class="label">Total ingresos</span><span class="val">${fmt(p.totalIng)}</span></div>
+    </div>
+    <div class="card">
+      <h2>Gastos personales</h2>
+      ${p.gastos.length ? p.gastos.map(e=>`
+        <div class="movi"><div>${e.categoria}</div>
+        <div style="text-align:right;"><div>${fmt(e.monto)}</div><button class="btn-del" data-pid="${e.id}">Borrar</button></div></div>`).join("")
+        : `<div class="empty">Sin gastos cargados este mes.</div>`}
+      <div class="row total"><span class="label">Total gastos</span><span class="val">${fmt(p.totalGastos)}</span></div>
+      <div class="row total"><span class="label">Balance</span><span class="val ${p.balance>=0?'balance-ok':'balance-bad'}">${fmt(p.balance)}</span></div>
+    </div>
+    <div class="card">
+      <h2>Agregar movimiento</h2>
+      <form id="formPersonal">
+        <label>Tipo</label>
+        <select name="tipo"><option value="gasto">Gasto</option><option value="ingreso">Otro ingreso</option></select>
+        <label>Categoría / concepto</label>
+        <select name="categoria" id="catPersonal">${CAT_PERSONAL.map(c=>`<option>${c}</option>`).join("")}</select>
+        <label>Monto</label>
+        <input name="monto" type="number" step="1" required>
+        <button class="btn" type="submit">Guardar</button>
+      </form>
+    </div>
+  `;
+}
+
+function render(){
+  const app = document.getElementById("app");
+  if(tab==="dashboard") app.innerHTML = renderDashboard();
+  else if(tab==="registro") app.innerHTML = renderRegistro();
+  else if(tab==="comparativo") app.innerHTML = `<div class="banner">Evolución mes a mes, automática — se arma sola con lo que cargues en "Cargar".</div>` + renderComparativo();
+  else if(tab==="personal") app.innerHTML = renderPersonal();
+
+  document.querySelectorAll(".navbar button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab===tab);
+    b.onclick = async () => { tab=b.dataset.tab; await loadData(); };
+  });
+  const refreshBtn = document.getElementById("refreshBtn");
+  if(refreshBtn) refreshBtn.onclick = async () => { await loadData(); };
+
+  const mesSel = document.getElementById("mesSel");
+  if(mesSel) mesSel.onchange = (e)=>{ mesActual = e.target.value; render(); };
+  const mesSelP = document.getElementById("mesSelPersonal");
+  if(mesSelP) mesSelP.onchange = (e)=>{ mesActual = e.target.value; render(); };
+
+  const formR = document.getElementById("formRegistro");
+  if(formR) formR.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(formR);
+    registro.push({id:uid(), mes:fd.get("mes"), fecha:fd.get("fecha")||"", ambito:fd.get("ambito"),
+      item:fd.get("item"), monto:Number(fd.get("monto")), persona:fd.get("persona")||""});
+    mesActual = fd.get("mes");
+    await saveRegistro();
+    render();
+  };
+  document.querySelectorAll(".btn-del[data-id]").forEach(b=>{
+    b.onclick = async () => {
+      registro = registro.filter(t=>t.id!==b.dataset.id);
+      await saveRegistro();
+      render();
+    };
+  });
+
+  document.querySelectorAll(".person-toggle button").forEach(b=>{
+    b.onclick = () => { personSel=b.dataset.p; render(); };
+  });
+  const formP = document.getElementById("formPersonal");
+  if(formP) formP.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(formP);
+    personal[personSel].push({id:uid(), mes:mesActual, tipo:fd.get("tipo"),
+      categoria:fd.get("categoria"), monto:Number(fd.get("monto"))});
+    await savePersonal(personSel);
+    render();
+  };
+  document.querySelectorAll(".btn-del[data-pid]").forEach(b=>{
+    b.onclick = async () => {
+      personal[personSel] = personal[personSel].filter(e=>e.id!==b.dataset.pid);
+      await savePersonal(personSel);
+      render();
+    };
+  });
+}
+
+document.getElementById("app").innerHTML = `<div class="empty">Cargando datos compartidos…</div>`;
+loadData();
+</script>
+</body>
+</html>
